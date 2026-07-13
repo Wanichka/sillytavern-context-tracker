@@ -4,16 +4,12 @@ A tiny always-on-screen badge for SillyTavern that shows the current state of yo
 
 ## What it shows
 
-- **msg** — id of the last message (same 0-based id SillyTavern uses)
+- **first msg** — id of the first visible message, i.e. the oldest message still in context (same 0-based id SillyTavern uses): hide 0–295 and it shows 296
 - **in context** — number of visible (non-hidden) messages
 - **tokens** — token count of visible messages / max context
 - A thin progress bar filling up toward your summary interval, and a small pulsing dot when it's time to summarize
 
 Everything is computed live from the chat (hidden messages are detected by their `is_system` flag), so the numbers stay correct after `/hide` with no manual input.
-
-## Installation
-
-Copy the `context-tracker` folder into `data/<your-user>/extensions/` and reload the page.
 
 ## Usage
 
@@ -26,6 +22,8 @@ Copy the `context-tracker` folder into `data/<your-user>/extensions/` and reload
 - Show/hide the token counter
 - Show/hide the progress bar and "time to summarize" dot
 - Summary interval in messages (0 disables the indicator)
+- Manual token limit for the denominator (useful with "unlimited" context size)
+- Badge language (English / Russian)
 - Reset badge position
 
 ## Notes
