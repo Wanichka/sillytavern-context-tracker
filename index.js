@@ -24,8 +24,8 @@
 
     const I18N = {
         en: {
-            firstMsg: 'first msg',
-            inCtx: 'in context',
+            start: 'start',
+            msgs: 'messages',
             due: 'Time to summarize',
             s_show: 'Show badge',
             s_tokens: 'Show tokens',
@@ -36,8 +36,8 @@
             s_reset: 'Reset badge position & size',
         },
         ru: {
-            firstMsg: 'первое соо',
-            inCtx: 'в контексте',
+            start: 'начало',
+            msgs: 'сообщений',
             due: 'Пора делать пересказ',
             s_show: 'Показывать бейдж',
             s_tokens: 'Показывать токены',
@@ -155,11 +155,10 @@
                 <span class="ctt-title">context</span>
                 <div class="ctt-dot"></div>
             </div>
-            <div class="ctt-row"><span class="ctt-label" data-ctti="firstMsg"></span><span class="ctt-val" data-ctt="first">—</span></div>
-            <div class="ctt-row"><span class="ctt-label" data-ctti="inCtx"></span><span class="ctt-val" data-ctt="visible">—</span></div>
-            <div class="ctt-tokens-block">
-                <div class="ctt-sep"></div>
-                <div class="ctt-row ctt-tokens-row"><span class="ctt-tokens" data-ctt="tokens">—</span></div>
+            <div class="ctt-stats">
+                <div class="ctt-stat"><span class="ctt-label" data-ctti="start"></span><span class="ctt-val" data-ctt="first">—</span></div>
+                <div class="ctt-stat"><span class="ctt-label" data-ctti="msgs"></span><span class="ctt-val" data-ctt="visible">—</span></div>
+                <div class="ctt-stat ctt-tokens-block"><span class="ctt-tokens" data-ctt="tokens">—</span></div>
             </div>
             <div class="ctt-progress"><div class="ctt-progress-fill"></div></div>
             <div class="ctt-resize" title="Resize"></div>
