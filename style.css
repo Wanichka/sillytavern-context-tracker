@@ -1,21 +1,23 @@
 /* Context Tracker — every color comes from SillyTavern theme variables,
-   so the badge adapts to any theme automatically. */
+   so the badge adapts to any theme automatically.
+   Layout: a wide horizontal strip — labels + values in one row,
+   a single glowing progress bar as the only accent. */
 
 #ctx-tracker-badge {
     position: fixed;
     z-index: 3000;
-    min-width: 148px;
-    padding: 9px 13px 11px;
+    width: 340px;
+    padding: 8px 14px 12px;
     border-radius: 10px;
     overflow: hidden;
     background: var(--SmartThemeBlurTintColor, rgba(20, 20, 20, 0.85));
     color: var(--SmartThemeBodyColor, #ddd);
-    border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
+    border: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
     backdrop-filter: blur(var(--blurStrength, 10px));
     -webkit-backdrop-filter: blur(var(--blurStrength, 10px));
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
     font-size: 12px;
-    line-height: 1.6;
+    line-height: 1.5;
     user-select: none;
     -webkit-user-select: none;
     touch-action: none; /* dragging works on touch screens too */
@@ -32,17 +34,17 @@
     opacity: 0.9;
 }
 
-/* thin accent strip along the top, fading out — picks up the theme accent */
+/* hairline accent along the top, fading out */
 #ctx-tracker-badge .ctt-accent {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 1px;
     background: linear-gradient(90deg,
         var(--SmartThemeQuoteColor, var(--SmartThemeBodyColor, #ddd)) 0%,
-        transparent 85%);
-    opacity: 0.9;
+        transparent 80%);
+    opacity: 0.7;
     pointer-events: none;
 }
 
@@ -51,62 +53,66 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 #ctx-tracker-badge .ctt-title {
     font-size: 8.5px;
     font-weight: 700;
-    letter-spacing: 2.2px;
+    letter-spacing: 2.4px;
     text-transform: uppercase;
-    opacity: 0.45;
+    opacity: 0.4;
 }
 
-#ctx-tracker-badge .ctt-row {
+/* one horizontal row: start · messages · tokens */
+#ctx-tracker-badge .ctt-stats {
     display: flex;
     justify-content: space-between;
-    gap: 14px;
     align-items: baseline;
+    gap: 14px;
+}
+
+#ctx-tracker-badge .ctt-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    white-space: nowrap;
 }
 
 #ctx-tracker-badge .ctt-label {
-    font-size: 10px;
-    letter-spacing: 0.6px;
+    font-size: 9.5px;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    opacity: 0.6;
+    opacity: 0.55;
 }
 
 #ctx-tracker-badge .ctt-val {
     font-weight: 700;
-    font-size: 13px;
+    font-size: 14px;
     font-variant-numeric: tabular-nums;
-}
-
-#ctx-tracker-badge .ctt-sep {
-    height: 1px;
-    margin: 5px 0 4px;
-    background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
-    opacity: 0.7;
-}
-
-#ctx-tracker-badge .ctt-tokens-row {
-    justify-content: flex-end;
 }
 
 #ctx-tracker-badge .ctt-tokens {
     font-weight: 500;
-    font-size: 11px;
+    font-size: 11.5px;
     font-variant-numeric: tabular-nums;
     opacity: 0.8;
 }
 
-/* progress toward the summary threshold */
+/* token counter when over the display limit */
+#ctx-tracker-badge .ctt-tokens.ctt-over {
+    color: var(--SmartThemeQuoteColor, var(--SmartThemeBodyColor, #ddd));
+    opacity: 1;
+    font-weight: 700;
+}
+
+/* the single accent: a glowing progress bar, full width */
 #ctx-tracker-badge .ctt-progress {
-    margin-top: 7px;
+    margin-top: 9px;
     height: 3px;
     border-radius: 3px;
-    background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.15));
-    overflow: hidden;
+    background: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.12));
+    overflow: visible;
 }
 
 #ctx-tracker-badge .ctt-progress-fill {
@@ -114,17 +120,17 @@
     width: 0%;
     border-radius: 3px;
     background: var(--SmartThemeQuoteColor, var(--SmartThemeBodyColor, #ddd));
-    box-shadow: 0 0 6px var(--SmartThemeQuoteColor, transparent);
+    box-shadow: 0 0 8px var(--SmartThemeQuoteColor, transparent),
+                0 0 2px var(--SmartThemeQuoteColor, transparent);
     transition: width 0.4s ease;
 }
 
-/* the "time to summarize" dot */
+/* the "time to summarize" dot — flat, no glow */
 #ctx-tracker-badge .ctt-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--SmartThemeQuoteColor, var(--SmartThemeBodyColor, #ddd));
-    box-shadow: 0 0 6px var(--SmartThemeQuoteColor, transparent);
     opacity: 0;
     pointer-events: none;
 }
@@ -148,7 +154,7 @@
     height: 16px;
     cursor: nwse-resize;
     touch-action: none;
-    opacity: 0.35;
+    opacity: 0.3;
     background:
         linear-gradient(135deg,
             transparent 0 55%,
@@ -177,6 +183,7 @@
 
 /* settings panel */
 .context-tracker-settings label[for="ctt_interval"],
+.context-tracker-settings label[for="ctt_token_limit"],
 .context-tracker-settings label[for="ctt_lang"] {
     display: block;
     margin-top: 8px;
@@ -185,11 +192,4 @@
 .context-tracker-settings #ctt_reset_pos {
     margin-top: 10px;
     text-align: center;
-}
-
-/* token counter when over the display limit */
-#ctx-tracker-badge .ctt-tokens.ctt-over {
-    color: var(--SmartThemeQuoteColor, var(--SmartThemeBodyColor, #ddd));
-    opacity: 1;
-    font-weight: 700;
 }
