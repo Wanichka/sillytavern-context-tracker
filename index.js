@@ -13,7 +13,6 @@
 
     const DEFAULTS = {
         enabled: true,
-        interval: 100,           // summary threshold (visible messages); 0 = off
         showTokens: true,
         showProgress: true,
         tokenLimit: 0,           // manual max-context for display; 0 = auto-detect
@@ -26,11 +25,9 @@
         en: {
             start: 'start',
             msgs: 'messages',
-            due: 'Time to summarize',
             s_show: 'Show badge',
             s_tokens: 'Show tokens',
-            s_progress: 'Progress bar & "due" dot',
-            s_interval: 'Summary interval (messages in context, 0 = off):',
+            s_progress: 'Context fill bar',
             s_token_limit: 'Token limit for display (0 = auto-detect):',
             s_lang: 'Language:',
             s_reset: 'Reset badge position & size',
@@ -38,11 +35,9 @@
         ru: {
             start: 'начало',
             msgs: 'сообщений',
-            due: 'Пора делать пересказ',
             s_show: 'Показывать бейдж',
             s_tokens: 'Показывать токены',
-            s_progress: 'Полоска прогресса и точка «пора»',
-            s_interval: 'Интервал пересказа (сообщений в контексте, 0 — выкл.):',
+            s_progress: 'Полоса заполненности контекста',
             s_token_limit: 'Лимит токенов для отображения (0 — автоопределение):',
             s_lang: 'Язык:',
             s_reset: 'Сбросить позицию и размер бейджа',
@@ -56,6 +51,8 @@
     let tokenCacheKey = '';
     let tokenText = '—';
     let tokenOver = false;
+    let tokenCount = 0;
+    let tokenMax = 0;
     let pollTimer = null;
 
     // ---------- utils ----------
@@ -153,7 +150,6 @@
             <div class="ctt-accent"></div>
             <div class="ctt-header">
                 <span class="ctt-title">context</span>
-                <div class="ctt-dot"></div>
             </div>
             <div class="ctt-stats">
                 <div class="ctt-stat"><span class="ctt-label" data-ctti="start"></span><span class="ctt-val" data-ctt="first">—</span></div>
@@ -175,8 +171,6 @@
         document.querySelectorAll('[data-ctti]').forEach(el => {
             el.textContent = t(el.getAttribute('data-ctti'));
         });
-        const dot = badge?.querySelector('.ctt-dot');
-        if (dot) dot.title = t('due');
     }
 
     function applyScale() {
@@ -316,41 +310,39 @@
         setText('first', s.firstVisibleId === null ? '—' : String(s.firstVisibleId));
         setText('visible', String(s.visible.length));
 
-        // tokens — visible messages only, cached per signature
+        // tokens — visible messages only, cached per signature.
+        // Always computed: the context-fill bar needs the numbers
+        // even when the text row is hidden
+        if (sig !== tokenCacheKey) {
+            tokenCacheKey = sig;
+            const text = s.visible.map(m => m.mes || '').join('\n');
+            const count = await countTokens(text);
+            // the chat may have changed during await — don't clobber fresh data
+            if (tokenCacheKey === sig) {
+                tokenCount = count;
+                tokenMax = getMaxContext() || 0;
+                tokenText = fmtTokens(count) + (tokenMax ? ' / ' + fmtTokens(tokenMax) : '');
+                tokenOver = Boolean(tokenMax && count > tokenMax);
+            }
+        }
         const tokensBlock = badge.querySelector('.ctt-tokens-block');
         tokensBlock.style.display = settings.showTokens ? '' : 'none';
         if (settings.showTokens) {
-            if (sig !== tokenCacheKey) {
-                tokenCacheKey = sig;
-                const text = s.visible.map(m => m.mes || '').join('\n');
-                const count = await countTokens(text);
-                // the chat may have changed during await — don't clobber fresh data
-                if (tokenCacheKey === sig) {
-                    const max = getMaxContext();
-                    tokenText = fmtTokens(count) + (max ? ' / ' + fmtTokens(max) : '');
-                    tokenOver = Boolean(max && count > max);
-                }
-            }
             setText('tokens', tokenText);
             badge.querySelector('.ctt-tokens')?.classList.toggle('ctt-over', tokenOver);
         }
         // context full (tokens over the limit) drives the pulse alarm
-        badge.classList.toggle('ctt-full', settings.showTokens && tokenOver);
+        badge.classList.toggle('ctt-full', tokenOver);
 
-        // progress toward the summary threshold + "due" dot
+        // context fill bar: tokens used vs the limit
         const bar = badge.querySelector('.ctt-progress');
         const fill = badge.querySelector('.ctt-progress-fill');
-        const dot = badge.querySelector('.ctt-dot');
-        const interval = Number(settings.interval) || 0;
-
-        if (interval > 0 && settings.showProgress) {
+        if (settings.showProgress && tokenMax > 0) {
             bar.style.display = '';
-            const ratio = Math.min(s.visible.length / interval, 1);
+            const ratio = Math.min(tokenCount / tokenMax, 1);
             fill.style.width = (ratio * 100).toFixed(1) + '%';
-            dot.classList.toggle('ctt-due', s.visible.length >= interval);
         } else {
             bar.style.display = 'none';
-            dot.classList.remove('ctt-due');
         }
     }
 
@@ -382,8 +374,6 @@
                         <input type="checkbox" id="ctt_show_progress">
                         <span data-ctti="s_progress"></span>
                     </label>
-                    <label for="ctt_interval" data-ctti="s_interval"></label>
-                    <input type="number" id="ctt_interval" class="text_pole" min="0" step="10">
                     <label for="ctt_token_limit" data-ctti="s_token_limit"></label>
                     <input type="number" id="ctt_token_limit" class="text_pole" min="0" step="1000">
                     <label for="ctt_lang" data-ctti="s_lang"></label>
@@ -409,7 +399,6 @@
         const $enabled = document.getElementById('ctt_enabled');
         const $tokens = document.getElementById('ctt_show_tokens');
         const $progress = document.getElementById('ctt_show_progress');
-        const $interval = document.getElementById('ctt_interval');
         const $tokenLimit = document.getElementById('ctt_token_limit');
         const $lang = document.getElementById('ctt_lang');
         const $reset = document.getElementById('ctt_reset_pos');
@@ -417,19 +406,12 @@
         $enabled.checked = settings.enabled;
         $tokens.checked = settings.showTokens;
         $progress.checked = settings.showProgress;
-        $interval.value = settings.interval;
         $tokenLimit.value = settings.tokenLimit;
         $lang.value = I18N[settings.lang] ? settings.lang : 'en';
 
         $enabled.addEventListener('change', () => { settings.enabled = $enabled.checked; save(); update(true); });
         $tokens.addEventListener('change', () => { settings.showTokens = $tokens.checked; save(); update(true); });
         $progress.addEventListener('change', () => { settings.showProgress = $progress.checked; save(); update(true); });
-        $interval.addEventListener('input', () => {
-            const v = parseInt($interval.value, 10);
-            settings.interval = Number.isFinite(v) && v >= 0 ? v : 0;
-            save();
-            update(true);
-        });
         $tokenLimit.addEventListener('input', () => {
             const v = parseInt($tokenLimit.value, 10);
             settings.tokenLimit = Number.isFinite(v) && v >= 0 ? v : 0;
