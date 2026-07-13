@@ -106,7 +106,7 @@
     font-weight: 700;
 }
 
-/* progress toward the summary threshold — flat accent, no glow */
+/* context fill bar: tokens used vs the limit — flat accent, no glow */
 #ctx-tracker-badge .ctt-progress {
     margin: 8px 12px 11px;
     height: 3px;
@@ -123,33 +123,15 @@
     transition: width 0.4s ease;
 }
 
-/* the "time to summarize" dot — appears when the message interval
-   is reached; calm and static, it's a planned event */
-#ctx-tracker-badge .ctt-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--ctt-accent);
-    opacity: 0;
-    pointer-events: none;
-}
-
-#ctx-tracker-badge .ctt-dot.ctt-due {
-    opacity: 1;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ctt-accent) 25%, transparent);
-}
-
 /* context full (tokens over the limit) — the alarm state:
-   the progress bar, the token counter and the dot pulse together */
-#ctx-tracker-badge.ctt-full .ctt-progress-fill,
-#ctx-tracker-badge.ctt-full .ctt-tokens,
-#ctx-tracker-badge.ctt-full .ctt-dot.ctt-due {
-    animation: ctt-pulse 2.4s ease-in-out infinite;
+   the fill bar pulses, hard to miss at full width */
+#ctx-tracker-badge.ctt-full .ctt-progress-fill {
+    animation: ctt-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes ctt-pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.35; }
+    50% { opacity: 0.15; }
 }
 
 /* resize grip: three diagonal lines in the bottom-right corner */
@@ -181,9 +163,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #ctx-tracker-badge.ctt-full .ctt-progress-fill,
-    #ctx-tracker-badge.ctt-full .ctt-tokens,
-    #ctx-tracker-badge.ctt-full .ctt-dot.ctt-due {
+    #ctx-tracker-badge.ctt-full .ctt-progress-fill {
         animation: none;
     }
     #ctx-tracker-badge .ctt-progress-fill {
