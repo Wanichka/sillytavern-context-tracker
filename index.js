@@ -53,6 +53,8 @@
     let tokenOver = false;
     let tokenCount = 0;
     let tokenMax = 0;
+    let promptTokens = null;   // tokens of the last really assembled prompt
+    let tokenSource = 'chat';  // 'prompt' | 'chat' | 'estimate' (for debugging)
     let pollTimer = null;
 
     // ---------- utils ----------
@@ -120,7 +122,8 @@
         } catch (e) {
             console.warn(`[${MODULE}] token count failed, using estimate`, e);
         }
-        return Math.round(text.length / 3.2); // rough fallback
+        tokenSource = 'estimate';
+        return Math.round(text.length / 3.2); // rough fallback, noticeably imprecise
     }
 
     // ---------- stats ----------
@@ -310,21 +313,25 @@
         setText('first', s.firstVisibleId === null ? '—' : String(s.firstVisibleId));
         setText('visible', String(s.visible.length));
 
-        // tokens — visible messages only, cached per signature.
-        // Always computed: the context-fill bar needs the numbers
-        // even when the text row is hidden
-        if (sig !== tokenCacheKey) {
+        // tokens. Preferred source: the last really assembled prompt
+        // (captured on generation events) — same thing the proxy bills.
+        // Fallback before the first generation: raw visible chat text.
+        if (promptTokens !== null) {
+            tokenCount = promptTokens;
+            tokenSource = 'prompt';
+        } else if (sig !== tokenCacheKey) {
             tokenCacheKey = sig;
+            tokenSource = 'chat';
             const text = s.visible.map(m => m.mes || '').join('\n');
             const count = await countTokens(text);
             // the chat may have changed during await — don't clobber fresh data
             if (tokenCacheKey === sig) {
                 tokenCount = count;
-                tokenMax = getMaxContext() || 0;
-                tokenText = fmtTokens(count) + (tokenMax ? ' / ' + fmtTokens(tokenMax) : '');
-                tokenOver = Boolean(tokenMax && count > tokenMax);
             }
         }
+        tokenMax = getMaxContext() || 0;
+        tokenText = fmtTokens(tokenCount) + (tokenMax ? ' / ' + fmtTokens(tokenMax) : '');
+        tokenOver = Boolean(tokenMax && tokenCount > tokenMax);
         const tokensBlock = badge.querySelector('.ctt-tokens-block');
         tokensBlock.style.display = settings.showTokens ? '' : 'none';
         if (settings.showTokens) {
@@ -437,8 +444,41 @@
 
     // ---------- events ----------
 
+    async function onPromptReady(data) {
+        try {
+            if (!data || data.dryRun) return;
+            let text = '';
+            if (Array.isArray(data.chat)) {
+                // chat completion: array of {role, content}
+                text = data.chat
+                    .map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content ?? ''))
+                    .join('\n');
+            } else if (typeof data.prompt === 'string') {
+                // text completion: a single combined prompt string
+                text = data.prompt;
+            } else if (typeof data === 'string') {
+                text = data;
+            }
+            if (!text) return;
+            promptTokens = await countTokens(text);
+            console.debug(`[${MODULE}] prompt tokens: ${promptTokens} (source: assembled prompt)`);
+            update(true);
+        } catch (e) {
+            console.warn(`[${MODULE}] failed to count assembled prompt`, e);
+        }
+    }
+
     function bindEvents() {
         const et = ctx.eventTypes || {};
+
+        // the really assembled prompt, right before sending —
+        // the most accurate number available to an extension
+        if (et.CHAT_COMPLETION_PROMPT_READY) {
+            ctx.eventSource.on(et.CHAT_COMPLETION_PROMPT_READY, onPromptReady);
+        }
+        if (et.GENERATE_AFTER_COMBINE_PROMPTS) {
+            ctx.eventSource.on(et.GENERATE_AFTER_COMBINE_PROMPTS, onPromptReady);
+        }
         const names = [
             et.CHAT_CHANGED,
             et.MESSAGE_SENT,
