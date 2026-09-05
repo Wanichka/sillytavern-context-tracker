@@ -3,6 +3,8 @@
 // (non-hidden) messages, token usage. A progress bar and a pulsing dot signal
 // when it's time to summarize.
 
+import { isRoleplayDocked, registerRoleplayPanel } from './roleplay-tools-adapter.js';
+
 (function () {
     'use strict';
 
@@ -199,6 +201,15 @@
         initDrag();
         initResize();
         applyPosition();
+
+        registerRoleplayPanel({
+            id: 'context', title: 'Context', minHeight: 100,
+            element: badge, display: 'block',
+            controls: badge.querySelector('.ctt-header'),
+            onMount: () => update(true),
+            onShow: () => update(true),
+            onRelease: () => { applyScale(); applyPosition(); update(true); },
+        });
     }
 
     function refreshI18n() {
@@ -208,12 +219,14 @@
     }
 
     function applyScale() {
+        if (isRoleplayDocked(badge)) return;
         const s = Math.min(Math.max(Number(settings.scale) || 1, SCALE_MIN), SCALE_MAX);
         settings.scale = s;
         badge.style.transform = `scale(${s})`;
     }
 
     function applyPosition() {
+        if (isRoleplayDocked(badge)) return;
         if (!badge) return;
         let x, y;
         if (settings.pos && Number.isFinite(settings.pos.x) && Number.isFinite(settings.pos.y)) {
@@ -246,6 +259,7 @@
         let startX = 0, startY = 0, origX = 0, origY = 0;
 
         badge.addEventListener('pointerdown', (e) => {
+            if (isRoleplayDocked(badge)) return;
             if (e.target.closest('.ctt-resize')) return; // grip has its own handler
             dragging = true;
             badge.setPointerCapture(e.pointerId);
@@ -288,6 +302,7 @@
         let startX = 0, startY = 0, startScale = 1;
 
         grip.addEventListener('pointerdown', (e) => {
+            if (isRoleplayDocked(badge)) return;
             resizing = true;
             grip.setPointerCapture(e.pointerId);
             badge.classList.add('ctt-resizing');

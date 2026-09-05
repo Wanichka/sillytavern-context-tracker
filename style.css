@@ -183,3 +183,27 @@
     margin-top: 10px;
     text-align: center;
 }
+
+/* Optional Roleplay Tools dock. The token counter still owns all its data. */
+#rpt-shell #ctx-tracker-badge[data-rpt-docked] {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0;
+    transform: none !important;
+    z-index: auto;
+    border: 0;
+    border-radius: 0;
+    backdrop-filter: none;
+    cursor: default;
+    touch-action: auto;
+    user-select: text;
+}
+#rpt-shell #ctx-tracker-badge[data-rpt-docked] .ctt-header { min-height: 39px; padding: 5px 8px; gap: 4px; }
+#rpt-shell #ctx-tracker-badge[data-rpt-docked] .ctt-stats { flex-wrap: wrap; gap: 4px 10px; margin: 8px 9px 0; }
+#rpt-shell #ctx-tracker-badge[data-rpt-docked] .ctt-label { font-size: 10px; letter-spacing: .5px; }
+#rpt-shell #ctx-tracker-badge[data-rpt-docked] .ctt-resize { display: none !important; }
+#rpt-shell .rpt-pinned #ctx-tracker-badge[data-rpt-docked] .ctt-header { display: none; }
+#rpt-shell .rpt-collapsed #ctx-tracker-badge[data-rpt-docked] .ctt-stats,
+#rpt-shell .rpt-collapsed #ctx-tracker-badge[data-rpt-docked] .ctt-progress { display: none !important; }

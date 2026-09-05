@@ -6,6 +6,7 @@
     "js": "index.js",
     "css": "style.css",
     "author": "Wani",
-    "version": "1.0.0",
+    "version": "1.0.1-beta.1",
+    "auto_update": false,
     "homePage": "https://github.com/Wanichka/sillytavern-context-tracker"
 }
